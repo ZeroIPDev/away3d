@@ -11,6 +11,7 @@ import away3d.lights.*;
 import away3d.loaders.misc.*;
 import away3d.loaders.parsers.*;
 import away3d.primitives.*;
+import away3d.materials.*;
 
 import openfl.events.*;
 import openfl.net.*;
@@ -37,12 +38,18 @@ class Loader3D extends ObjectContainer3D
 	private var _loadingSessions:Vector<AssetLoader>;
 	private var _useAssetLib:Bool;
 	private var _assetLibId:String;
+
+	// Sprite3D data
+	private var _sprite3d:Vector<ObjectContainer3D>;
+	private var _material:Vector<MaterialBase>;
 	
 	public function new(useAsset3DLibrary:Bool = true, asset3DLibraryId:String = null)
 	{
 		super();
 		
 		_loadingSessions = new Vector<AssetLoader>();
+		_sprite3d = new Vector<ObjectContainer3D>();
+		_material = new Vector<MaterialBase>();
 		_useAssetLib = useAsset3DLibrary;
 		_assetLibId = asset3DLibraryId;
 	}
@@ -208,11 +215,18 @@ class Loader3D extends ObjectContainer3D
 			// TODO: not used
 			// var type : String = ev.asset.assetType;
 			var obj:ObjectContainer3D = null;
+			var mat:MaterialBase = null;
+			var _issprite3d:Bool = false;
+
 			switch (ev.asset.assetType) {
 				case Asset3DType.LIGHT:
 					obj = #if (haxe_ver >= 4.2) Std.isOfType #else Std.is #end(ev.asset, LightBase) ? cast ev.asset : null;
 				case Asset3DType.CONTAINER:
 					obj = #if (haxe_ver >= 4.2) Std.isOfType #else Std.is #end(ev.asset, ObjectContainer3D) ? cast ev.asset : null;
+					if(obj.extra.Sprite3D != null) { //push for Sprite3D parsing later
+						_sprite3d.push(obj);
+						_issprite3d = true;
+					}
 				case Asset3DType.MESH:
 					obj = #if (haxe_ver >= 4.2) Std.isOfType #else Std.is #end(ev.asset, Mesh) ? cast ev.asset : null;
 				case Asset3DType.SKYBOX:
@@ -223,11 +237,14 @@ class Loader3D extends ObjectContainer3D
 					obj = #if (haxe_ver >= 4.2) Std.isOfType #else Std.is #end(ev.asset, Camera3D) ? cast ev.asset : null;
 				case Asset3DType.SEGMENT_SET:
 					obj = #if (haxe_ver >= 4.2) Std.isOfType #else Std.is #end(ev.asset, SegmentSet) ? cast ev.asset : null;
+				case Asset3DType.MATERIAL:
+					mat = #if (haxe_ver >= 4.2) Std.isOfType #else Std.is #end(ev.asset, MaterialBase) ? cast ev.asset : null;
+					_material.push(mat); //push for Sprite3D parsing later
 			}
 			
 			// If asset was of fitting type, and doesn't
 			// already have a parent, add to loader container
-			if (obj != null && obj.parent == null)
+			if (obj != null && obj.parent == null && !_issprite3d)
 				addChild(obj);
 		}
 		
@@ -256,6 +273,28 @@ class Loader3D extends ObjectContainer3D
 	private function onResourceComplete(ev:Event):Void
 	{
 		removeListeners(cast(ev.currentTarget, EventDispatcher));
+		parseSprite3D();
 		this.dispatchEvent(ev.clone());
+	}
+
+	// Sprite3D parsing
+	private function parseSprite3D()
+	{
+		var sprite:Sprite3D = null;
+
+		for(_obj in _sprite3d) {
+			var _hasmaterial:Bool = false;
+			for(i in 0..._material.length) {
+				if(_material[i].name == _obj.extra.Sprite3D) {
+					sprite = new Sprite3D(_material[i], _obj.scaleX, _obj.scaleY);
+					sprite.moveTo(_obj.x, _obj.y, _obj.z);
+					sprite.scale(10); //scales to (hopefully) match what it looks like in-editor
+					addChild(sprite);
+					_hasmaterial = true;
+					break;
+				}
+			}
+			if(!_hasmaterial) trace("Unable to match material for Sprite3D ", _obj.name);
+		}
 	}
 }
