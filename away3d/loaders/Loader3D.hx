@@ -12,6 +12,7 @@ import away3d.loaders.misc.*;
 import away3d.loaders.parsers.*;
 import away3d.primitives.*;
 import away3d.materials.*;
+import away3d.materials.utils.DefaultMaterialManager;
 
 import openfl.events.*;
 import openfl.net.*;
@@ -280,22 +281,21 @@ class Loader3D extends ObjectContainer3D
 	// Sprite3D parsing
 	private function parseSprite3D()
 	{
-		var sprite:Sprite3D = null;
-
 		for(_obj in _sprite3d) {
 			var _hasmaterial:Bool = false;
+			var sprite:Sprite3D = new Sprite3D(DefaultMaterialManager.getDefaultMaterial(), _obj.scaleX, _obj.scaleY);
+			sprite.scaleX = _obj.scaleX;
+			sprite.scaleY = _obj.scaleY;
+			sprite.moveTo(_obj.x, _obj.y, _obj.z);
 			for(i in 0..._material.length) {
 				if(_material[i].name == _obj.extra.Sprite3D) {
-					sprite = new Sprite3D(_material[i], _obj.scaleX, _obj.scaleY);
-					sprite.scaleX = _obj.scaleX;
-					sprite.scaleY = _obj.scaleY;
-					sprite.moveTo(_obj.x, _obj.y, _obj.z);
-					addChild(sprite);
+					sprite.material = _material[i];
 					_hasmaterial = true;
 					break;
 				}
 			}
-			if(!_hasmaterial) trace("Unable to match material for Sprite3D ", _obj.name);
+			if(!_hasmaterial) trace("Warning: Unable to match material for Sprite3D " + _obj.name, " using default");
+			addChild(sprite);
 		}
 	}
 }
