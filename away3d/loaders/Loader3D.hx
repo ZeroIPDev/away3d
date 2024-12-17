@@ -287,8 +287,9 @@ class Loader3D extends ObjectContainer3D
 			for(i in 0..._material.length) {
 				if(_material[i].name == _obj.extra.Sprite3D) {
 					sprite = new Sprite3D(_material[i], _obj.scaleX, _obj.scaleY);
+					sprite.scaleX = _obj.scaleX;
+					sprite.scaleY = _obj.scaleY;
 					sprite.moveTo(_obj.x, _obj.y, _obj.z);
-					sprite.scale(10); //scales to (hopefully) match what it looks like in-editor
 					addChild(sprite);
 					_hasmaterial = true;
 					break;
