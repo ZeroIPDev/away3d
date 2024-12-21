@@ -5,6 +5,8 @@ Away3D
 
 Away3D is an open source platform for developing interactive 3D graphics for video games and applications.
 
+This is a custom fork kept in sync with ![AwayBuilder](https://github.com/ZeroIPDev/AwayBuilder). New features include:
+- Sprite3D parsing in AWD files
 
 Features
 --------
